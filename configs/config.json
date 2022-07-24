@@ -1,0 +1,19 @@
+{
+    "environment": {
+        "name": "snake",
+        "config": {
+            "field_width": 15,
+            "field_height": 10
+        }
+    },
+
+    "algorithm": {
+        "name": "random",
+        "config": {
+            "avg_len": 50,
+            "width": 302,
+            "plot_rewards": true,
+            "plot_keys": ["length"]
+        }
+    }
+}
