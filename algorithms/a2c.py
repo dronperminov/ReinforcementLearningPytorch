@@ -7,7 +7,7 @@ from algorithms.abstract_algorithm import AbstractAlgorithm
 from common.model import ActorCriticModel
 
 
-class AdvancedActorCritic(AbstractAlgorithm):
+class AdvantageActorCritic(AbstractAlgorithm):
     def __init__(self, environment: AbstractEnvironment, config: dict):
         super().__init__(environment, config)
 
@@ -52,7 +52,7 @@ class AdvancedActorCritic(AbstractAlgorithm):
         raise ValueError(f"Unknown optimizer \"{name}\"")
 
     def get_action(self, state: np.ndarray):
-        state = torch.from_numpy(state).float().to(self.device)
+        state = torch.from_numpy(state).float().unsqueeze(0).to(self.device)
         probs, value = self.agent(state)
         distribution = torch.distributions.Categorical(probs)
         action = distribution.sample()
@@ -70,20 +70,26 @@ class AdvancedActorCritic(AbstractAlgorithm):
         discounted_rewards.reverse()
         discounted_rewards = torch.tensor(discounted_rewards, device=self.device)
         discounted_rewards = (discounted_rewards - discounted_rewards.mean()) / (discounted_rewards.std() + 1e-8)
-
         return discounted_rewards
 
-    def __update_policy(self):
-        discounted_rewards = self.get_discounted_rewards()
-        policy_loss, value_loss = [], []
+    def get_advantages(self, discounted_rewards: torch.tensor, values: torch.tensor):
+        advantages = discounted_rewards - values
+        advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-8)
+        return advantages
 
-        for log_prob, value, reward in zip(self.log_probs, self.values, discounted_rewards):
-            advantage = reward - value.item()
-            policy_loss.append(-log_prob * advantage)
-            value_loss.append(self.loss(value, torch.tensor([reward], device=self.device)))
+    def __update_policy(self):
+        log_prob_actions = torch.cat(self.log_probs)
+        values = torch.cat(self.values).squeeze(-1)
+        discounted_rewards = self.get_discounted_rewards()
+        advantages = self.get_advantages(discounted_rewards, values)
+
+        advantages = advantages.detach()
+        discounted_rewards = discounted_rewards.detach()
 
         self.optimizer.zero_grad()
-        loss = sum(policy_loss) + sum(value_loss)
+        policy_loss = -(advantages * log_prob_actions).sum()
+        value_loss = self.loss(discounted_rewards, values).sum()
+        loss = policy_loss + value_loss
         loss.backward()
         self.optimizer.step()
         self.rewards.clear()
@@ -118,4 +124,4 @@ class AdvancedActorCritic(AbstractAlgorithm):
         self.end_episode(episode_reward, info)
 
     def get_title(self) -> str:
-        return f'Actor critic (gamma: {self.gamma})'
+        return f'A2C (gamma: {self.gamma})'
