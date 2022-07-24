@@ -8,7 +8,7 @@
     },
 
     "algorithm": {
-        "name": "reinforce",
+        "name": "a2c",
         "config": {
             "width": 362,
             "plot_keys": ["length"],

@@ -1,9 +1,9 @@
-from typing import List
+from typing import List, Union
 import torch
 
 
 class Model(torch.nn.Module):
-    def __init__(self, configuration: List[dict], input_shape: int):
+    def __init__(self, configuration: List[Union[dict, List[dict]]], input_shape: int):
         super(Model, self).__init__()
 
         self.layers = torch.nn.ModuleList()
@@ -36,3 +36,20 @@ class Model(torch.nn.Module):
             x = layer(x)
 
         return x
+
+
+class ActorCriticModel(Model):
+    def __init__(self, configuration: List[Union[dict, List[dict]]], input_shape: int, output_shape: int):
+        super(ActorCriticModel, self).__init__(configuration, input_shape)
+        self.actor = torch.nn.Linear(in_features=self.output_shape, out_features=output_shape)
+        self.actor_head = torch.nn.Softmax(dim=-1)
+        self.critic_head = torch.nn.Linear(in_features=self.output_shape, out_features=1)
+
+    def forward(self, x):
+        for layer in self.layers:
+            x = layer(x)
+
+        action_prob = self.actor_head(self.actor(x))
+        state_values = self.critic_head(x)
+
+        return action_prob, state_values

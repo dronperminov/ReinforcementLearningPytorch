@@ -7,6 +7,7 @@ from environments.snake import Snake
 from algorithms.random_algorithm import RandomAlgorithm
 from algorithms.dqn import DQN
 from algorithms.reinforce import Reinforce
+from algorithms.a2c import AdvancedActorCritic
 
 
 def get_environment(config: json) -> AbstractEnvironment:
@@ -37,6 +38,9 @@ def get_algorithm(config: json, environment: AbstractEnvironment):
 
     if algorithm_name == "reinforce":
         return Reinforce(environment, algorithm.get("config", {}))
+
+    if algorithm_name == "a2c":
+        return AdvancedActorCritic(environment, algorithm.get("config", {}))
 
     raise ValueError(f"Unknown algorithm \"{algorithm_name}\"")
 
