@@ -27,7 +27,7 @@ class Model(torch.nn.Module):
         elif activation == "tanh":
             self.layers.append(torch.nn.Tanh())
         elif activation == "softmax":
-            self.layers.append(torch.nn.Softmax())
+            self.layers.append(torch.nn.Softmax(dim=-1))
 
         self.output_shape = size
 
