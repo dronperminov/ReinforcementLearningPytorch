@@ -28,7 +28,7 @@ class Snake(AbstractEnvironment):
         self.steps_without_food = 0
 
         self.action_space_shape = 3
-        self.observation_space_shape = [43]
+        self.observation_space_shape = 43
         self.info = {
             'length': Snake.INITIAL_LENGTH,
             'max_length': Snake.INITIAL_LENGTH,

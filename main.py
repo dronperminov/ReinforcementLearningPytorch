@@ -5,6 +5,7 @@ from environments.abstract_environment import AbstractEnvironment
 from environments.snake import Snake
 
 from algorithms.random_algorithm import RandomAlgorithm
+from algorithms.dqn import DQN
 
 
 def get_environment(config: json) -> AbstractEnvironment:
@@ -29,6 +30,9 @@ def get_algorithm(config: json, environment: AbstractEnvironment):
 
     if algorithm_name == "random":
         return RandomAlgorithm(environment, algorithm.get("config", {}))
+
+    if algorithm_name == "dqn":
+        return DQN(environment, algorithm.get("config", {}))
 
     raise ValueError(f"Unknown algorithm \"{algorithm_name}\"")
 

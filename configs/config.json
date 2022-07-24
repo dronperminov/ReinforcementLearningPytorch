@@ -8,12 +8,34 @@
     },
 
     "algorithm": {
-        "name": "random",
+        "name": "dqn",
         "config": {
-            "avg_len": 50,
-            "width": 302,
-            "plot_rewards": true,
-            "plot_keys": ["length"]
+            "width": 362,
+            "plot_keys": ["length"],
+
+            "seed": 42,
+            "ddqn": false,
+
+            "batch_size": 64,
+            "min_replay_size": 1000,
+            "max_replay_size": 25000,
+
+            "max_epsilon": 1,
+            "min_epsilon": 0.001,
+            "decay": 0.001,
+            "gamma": 0.9,
+            "tau": 1e-3,
+
+            "train_model_period": 4,
+            "update_target_model_period": 500,
+
+            "learning_rate": 0.003,
+            "optimizer": "adam",
+
+            "agent_architecture": [
+                {"type": "dense", "size": 128, "activation": "relu"},
+                {"type": "dense", "size": 128, "activation": "relu"}
+            ]
         }
     }
 }

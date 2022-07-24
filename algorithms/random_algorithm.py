@@ -24,3 +24,6 @@ class RandomAlgorithm(AbstractAlgorithm):
             episode_reward += reward
 
         self.end_episode(episode_reward, info)
+
+    def get_title(self) -> str:
+        return "random algorithm"

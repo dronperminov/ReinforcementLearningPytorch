@@ -7,7 +7,7 @@ class AbstractAlgorithm:
     def __init__(self, environment: AbstractEnvironment, config: dict):
         self.environment = environment
         self.avg_len = config.get('avg_len', 50)
-        self.plot_rewards = config.get('plot_rewards', False)
+        self.plot_rewards = config.get('plot_rewards', True)
         self.plot_keys = config.get('plot_keys', [])
         self.plots = dict()
         self.episode = 0
@@ -33,6 +33,10 @@ class AbstractAlgorithm:
     def run(self, draw: bool = True):
         pass
 
+    @abc.abstractmethod
+    def get_title(self) -> str:
+        pass
+
     def draw(self):
         img = self.environment.draw(self.width, self.height)
         surf = pygame.surfarray.make_surface(img.swapaxes(0, 1))
@@ -45,6 +49,7 @@ class AbstractAlgorithm:
             self.__plot_key((i + 1 + self.plot_rewards) * self.width, 0, key)
 
         pygame.event.pump()
+        pygame.display.set_caption(self.get_title())
         pygame.display.update()
 
     def end_episode(self, episode_reward: float, info: dict):
@@ -94,23 +99,23 @@ class AbstractAlgorithm:
         if min_value == max_value:
             max_value += 1
 
-        reward_lines = []
-        average_reward_lines = []
+        value_lines = []
+        average_value_lines = []
 
         for i, (reward, avg_reward) in enumerate(zip(values, values_avg)):
             x = x0 + padding + i / (count - 1) * (self.width - 2 * padding)
             y = y0 + self.height - padding - ((reward - min_value) / (max_value - min_value)) * (self.height - 2 * padding)
             y_avg = y0 + self.height - padding - ((avg_reward - min_value) / (max_value - min_value)) * (self.height - 2 * padding)
 
-            reward_lines.append([x, y])
-            average_reward_lines.append([x, y_avg])
+            value_lines.append([x, y])
+            average_value_lines.append([x, y_avg])
 
-        pygame.draw.aalines(self.screen, (0, 150, 136), False, reward_lines)
-        pygame.draw.aalines(self.screen, (244, 67, 54), False, average_reward_lines)
+        pygame.draw.aalines(self.screen, (0, 150, 136), False, value_lines)
+        pygame.draw.aalines(self.screen, (244, 67, 54), False, average_value_lines)
 
         self.__draw_text(f'{max_value:.2f}', x0 + 2, y0 + padding, 'left', 'bottom')
         self.__draw_text(f'{min_value:.2f}', x0 + 2, y0 + self.height - padding + 2, 'left', 'top')
-        self.__draw_text(f'{self.episode}', reward_lines[-1][0], y0 + self.height - padding + 2, 'right', 'top')
+        self.__draw_text(f'{self.episode}', value_lines[-1][0], y0 + self.height - padding + 2, 'right', 'top')
         self.__draw_text(f'{key}', x0 + self.width // 2, y0 + padding + 2, 'center', 'bottom')
 
     def __append_plot(self, key: str, value: float):
