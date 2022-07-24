@@ -8,13 +8,15 @@
     },
 
     "algorithm": {
-        "name": "a2c",
+        "name": "ppo",
         "config": {
-            "width": 362,
+            "width": 302,
             "plot_keys": ["length"],
 
             "seed": 42,
             "gamma": 0.9,
+            "ppo_steps": 5,
+            "ppo_clip": 0.2,
 
             "learning_rate": 0.003,
             "optimizer": "adam",

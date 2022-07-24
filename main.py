@@ -9,6 +9,7 @@ from algorithms.dqn import DQN
 from algorithms.reinforce import Reinforce
 from algorithms.actor_critic import ActorCritic
 from algorithms.a2c import AdvantageActorCritic
+from algorithms.ppo import ProximalPolicyOptimization
 
 
 def get_environment(config: json) -> AbstractEnvironment:
@@ -45,6 +46,9 @@ def get_algorithm(config: json, environment: AbstractEnvironment):
 
     if algorithm_name == "a2c":
         return AdvantageActorCritic(environment, algorithm.get("config", {}))
+
+    if algorithm_name == "ppo":
+        return ProximalPolicyOptimization(environment, algorithm.get("config", {}))
 
     raise ValueError(f"Unknown algorithm \"{algorithm_name}\"")
 
