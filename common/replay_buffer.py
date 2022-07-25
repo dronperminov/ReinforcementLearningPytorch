@@ -43,10 +43,10 @@ class ReplayBuffer:
             next_states.append(v['next_state'])
             dones.append(v['done'])
 
-        states = torch.from_numpy(np.vstack(states)).float().to(device)
+        states = torch.from_numpy(np.array(states)).float().to(device)
         actions = torch.from_numpy(np.vstack(actions)).long().to(device)
         rewards = torch.from_numpy(np.vstack(rewards)).float().to(device)
-        next_states = torch.from_numpy(np.vstack(next_states)).float().to(device)
+        next_states = torch.from_numpy(np.array(next_states)).float().to(device)
         dones = torch.from_numpy(np.vstack(dones)).float().to(device)
 
         return states, actions, rewards, next_states, dones

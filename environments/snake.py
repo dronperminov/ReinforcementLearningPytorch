@@ -16,9 +16,14 @@ class Snake(AbstractEnvironment):
     NO_EAT = 'no eat'
     DEFAULT = 'default'
 
-    def __init__(self, field_width: int = 15, field_height: int = 10):
+    HEAD_CELL = 0
+    SNAKE_CELL = 1
+    FOOD_CELL = 2
+
+    def __init__(self, field_width: int = 15, field_height: int = 10, use_conv: bool = False):
         self.field_width = field_width
         self.field_height = field_height
+        self.use_conv = use_conv
         super().__init__(self.field_width / self.field_height)
 
         self.screen = None
@@ -28,7 +33,7 @@ class Snake(AbstractEnvironment):
         self.steps_without_food = 0
 
         self.action_space_shape = 3
-        self.observation_space_shape = 43
+        self.observation_space_shape = (3, self.field_height, self.field_width) if self.use_conv else 43
         self.info = {
             'length': Snake.INITIAL_LENGTH,
             'max_length': Snake.INITIAL_LENGTH,
@@ -157,7 +162,38 @@ class Snake(AbstractEnvironment):
 
         return [dx * i / (self.field_width - 1), dy * i / (self.field_height - 1)]
 
-    def __get_state(self) -> np.ndarray:
+    def __state_to_tensor(self):
+        state = np.zeros(self.observation_space_shape)
+
+        for i in range(self.field_width):
+            state[:, 0, i] = -1
+            state[:, self.field_height - 1, i] = -1
+
+        for i in range(self.field_height):
+            state[:, i, 0] = -1
+            state[:, i, self.field_width - 1] = -1
+
+        state[Snake.FOOD_CELL, self.food['y'], self.food['x']] = 1
+
+        head_x, head_y = self.snake[0]['x'], self.snake[0]['y']
+        state[Snake.HEAD_CELL, head_y, head_x] = 1
+        dx, dy = self.direction['dx'], self.direction['dy']
+
+        if 0 <= head_x + dx < self.field_width and 0 <= head_y + dy < self.field_height:
+            state[Snake.HEAD_CELL, head_y + dy, head_x + dx] = 0.5
+
+        if 0 <= head_x + dy < self.field_width and 0 <= head_y - dx < self.field_height:
+            state[Snake.HEAD_CELL, head_y - dx, head_x + dy] = 0.5
+
+        if 0 <= head_x - dy < self.field_width and 0 <= head_y + dx < self.field_height:
+            state[Snake.HEAD_CELL, head_y + dx, head_x - dy] = 0.5
+
+        for cell in self.snake:
+            state[Snake.SNAKE_CELL, cell['y'], cell['x']] = 1
+
+        return state
+
+    def __state_to_vector(self) -> np.ndarray:
         head_x = self.snake[0]['x']
         head_y = self.snake[0]['y']
 
@@ -213,6 +249,12 @@ class Snake(AbstractEnvironment):
         ]
 
         return np.array(vector)
+
+    def __get_state(self):
+        if self.use_conv:
+            return self.__state_to_tensor()
+
+        return self.__state_to_vector()
 
     def __get_reward(self, move: str) -> float:
         if move == Snake.WALL:

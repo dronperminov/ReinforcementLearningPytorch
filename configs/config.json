@@ -3,27 +3,46 @@
         "name": "snake",
         "config": {
             "field_width": 15,
-            "field_height": 10
+            "field_height": 10,
+            "use_conv": true
         }
     },
 
     "algorithm": {
-        "name": "gae",
+        "name": "dqn",
         "config": {
             "width": 302,
             "plot_keys": ["length"],
             "info_keys": ["wall", "eat_self", "no_eat", "max_length"],
 
             "seed": 42,
+            "ddqn": false,
+
+            "batch_size": 64,
+            "min_replay_size": 1000,
+            "max_replay_size": 25000,
+
+            "max_epsilon": 1,
+            "min_epsilon": 0.001,
+            "decay": 0.001,
             "gamma": 0.9,
-            "trace_decay": 0.9,
+            "tau": 1e-3,
+
+            "train_model_period": 4,
+            "update_target_model_period": 500,
 
             "learning_rate": 0.003,
             "optimizer": "adam",
 
             "agent_architecture": [
-                {"type": "dense", "size": 128, "activation": "relu"},
-                {"type": "dense", "size": 128, "activation": "relu"}
+                {"type": "conv", "fc": 16, "fs": 3, "padding": 1, "activation": "relu"},
+                {"type": "conv", "fc": 16, "fs": 3, "padding": 1, "activation": "relu", "stride": 2},
+                {"type": "conv", "fc": 32, "fs": 3, "padding": 1, "activation": "relu"},
+                {"type": "conv", "fc": 32, "fs": 3, "padding": 1, "activation": "relu", "stride": 2},
+                {"type": "conv", "fc": 64, "fs": 3, "padding": 1, "activation": "relu"},
+                {"type": "conv", "fc": 64, "fs": 3, "padding": 1, "activation": "relu", "stride": 2},
+                {"type": "flatten"},
+                {"type": "dense", "size": 256, "activation": "relu"}
             ]
         }
     }

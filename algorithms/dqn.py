@@ -99,7 +99,7 @@ class DQN(AbstractAlgorithm):
         self.model.train()
         predicted_targets = self.model(states).gather(1, actions)
         labels = rewards + self.gamma * labels_next * (1 - dones)
-        loss = self.loss(predicted_targets, labels).to(self.device)
+        loss = self.loss(predicted_targets, labels)
 
         self.optimizer.zero_grad()
         loss.backward()
