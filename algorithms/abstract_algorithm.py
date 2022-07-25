@@ -9,6 +9,7 @@ class AbstractAlgorithm:
         self.avg_len = config.get('avg_len', 50)
         self.plot_rewards = config.get('plot_rewards', True)
         self.plot_keys = config.get('plot_keys', [])
+        self.info_keys = {key: '' for key in config.get('info_keys', [])}
         self.plots = dict()
         self.episode = 0
 
@@ -23,10 +24,11 @@ class AbstractAlgorithm:
         self.width = config.get('width', 500)
         self.height = config.get('height', int(self.width / self.environment.aspect_ratio))
         self.total_width = self.width * (1 + len(self.plots) // 2)
+        self.total_height = self.height + 25
 
         pygame.init()
-        self.screen = pygame.display.set_mode((self.total_width, self.height))
-        self.font_size = min(self.width // 40, 12)
+        self.screen = pygame.display.set_mode((self.total_width, self.total_height))
+        self.font_size = max(self.width // 40, 11)
         self.font = pygame.font.SysFont('Arial', self.font_size)
 
     @abc.abstractmethod
@@ -48,6 +50,10 @@ class AbstractAlgorithm:
         for i, key in enumerate(self.plot_keys):
             self.__plot_key((i + 1 + self.plot_rewards) * self.width, 0, key)
 
+        info = [f"{key}: {value}" for key, value in self.info_keys.items()]
+        pygame.draw.rect(self.screen, (255, 255, 255), pygame.Rect(0, self.height, self.total_width, self.total_height - self.height), 0)
+        self.__draw_text(", ".join(info), self.total_width // 2, self.height + 5, 'center', 'top')
+
         pygame.event.pump()
         pygame.display.set_caption(self.get_title())
         pygame.display.update()
@@ -58,6 +64,9 @@ class AbstractAlgorithm:
 
         for key in self.plot_keys:
             self.__append_plot(key, info[key])
+
+        for key in self.info_keys:
+            self.info_keys[key] = info[key]
 
         self.episode += 1
         print(f'End episode {self.episode} with reward {episode_reward}')

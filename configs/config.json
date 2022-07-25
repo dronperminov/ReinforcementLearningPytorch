@@ -12,6 +12,7 @@
         "config": {
             "width": 302,
             "plot_keys": ["length"],
+            "info_keys": ["wall", "eat_self", "no_eat", "max_length"],
 
             "seed": 42,
             "gamma": 0.9,
