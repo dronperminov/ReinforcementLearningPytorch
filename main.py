@@ -10,6 +10,7 @@ from algorithms.reinforce import Reinforce
 from algorithms.actor_critic import ActorCritic
 from algorithms.a2c import AdvantageActorCritic
 from algorithms.ppo import ProximalPolicyOptimization
+from algorithms.gae import GeneralizedAdvantageEstimation
 
 
 def get_environment(config: json) -> AbstractEnvironment:
@@ -49,6 +50,9 @@ def get_algorithm(config: json, environment: AbstractEnvironment):
 
     if algorithm_name == "ppo":
         return ProximalPolicyOptimization(environment, algorithm.get("config", {}))
+
+    if algorithm_name == "gae":
+        return GeneralizedAdvantageEstimation(environment, algorithm.get("config", {}))
 
     raise ValueError(f"Unknown algorithm \"{algorithm_name}\"")
 

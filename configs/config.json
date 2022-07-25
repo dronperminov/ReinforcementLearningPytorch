@@ -8,7 +8,7 @@
     },
 
     "algorithm": {
-        "name": "ppo",
+        "name": "gae",
         "config": {
             "width": 302,
             "plot_keys": ["length"],
@@ -16,8 +16,7 @@
 
             "seed": 42,
             "gamma": 0.9,
-            "ppo_steps": 5,
-            "ppo_clip": 0.2,
+            "trace_decay": 0.9,
 
             "learning_rate": 0.003,
             "optimizer": "adam",
