@@ -80,7 +80,7 @@ class DQN(AbstractAlgorithm):
         with torch.no_grad():
             actions_q = self.model(state)
 
-        return np.argmax(actions_q.cpu().numpy())
+        return torch.argmax(actions_q).item()
 
     def __train(self):
         if len(self.replay_buffer) < self.min_replay_size:

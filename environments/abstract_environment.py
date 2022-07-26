@@ -4,8 +4,7 @@ import numpy as np
 
 
 class AbstractEnvironment:
-    def __init__(self, aspect_ratio: float):
-        self.aspect_ratio = aspect_ratio
+    def __init__(self):
         self.action_space_shape = None
         self.observation_space_shape = None
 

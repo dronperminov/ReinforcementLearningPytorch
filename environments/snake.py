@@ -24,7 +24,7 @@ class Snake(AbstractEnvironment):
         self.field_width = field_width
         self.field_height = field_height
         self.use_conv = use_conv
-        super().__init__(self.field_width / self.field_height)
+        super().__init__()
 
         self.screen = None
         self.snake = None
@@ -33,7 +33,7 @@ class Snake(AbstractEnvironment):
         self.steps_without_food = 0
 
         self.action_space_shape = 3
-        self.observation_space_shape = (3, self.field_height, self.field_width) if self.use_conv else 43
+        self.observation_space_shape = (3, self.field_height + 2, self.field_width + 2) if self.use_conv else 43
         self.info = {
             'length': Snake.INITIAL_LENGTH,
             'max_length': Snake.INITIAL_LENGTH,
@@ -121,6 +121,7 @@ class Snake(AbstractEnvironment):
         if head_x + dx == self.food['x'] and head_y + dy == self.food['y']:
             self.snake.insert(0, {'x': head_x + dx, 'y': head_y + dy})
             self.food = self.__init_food()
+            self.info['length'] = len(self.snake)
             self.info['max_length'] = max(len(self.snake), self.info['max_length'])
             self.steps_without_food = 0
             return Snake.EAT_FOOD
@@ -164,32 +165,26 @@ class Snake(AbstractEnvironment):
 
     def __state_to_tensor(self):
         state = np.zeros(self.observation_space_shape)
+        state[Snake.FOOD_CELL, self.food['y'] + 1, self.food['x'] + 1] = 1
 
-        for i in range(self.field_width):
+        for i in range(self.field_width + 2):
             state[:, 0, i] = -1
-            state[:, self.field_height - 1, i] = -1
+            state[:, self.field_height + 1, i] = -1
 
-        for i in range(self.field_height):
+        for i in range(self.field_height + 2):
             state[:, i, 0] = -1
-            state[:, i, self.field_width - 1] = -1
+            state[:, i, self.field_width + 1] = -1
 
-        state[Snake.FOOD_CELL, self.food['y'], self.food['x']] = 1
-
-        head_x, head_y = self.snake[0]['x'], self.snake[0]['y']
-        state[Snake.HEAD_CELL, head_y, head_x] = 1
+        head_x, head_y = self.snake[0]['x'] + 1, self.snake[0]['y'] + 1
         dx, dy = self.direction['dx'], self.direction['dy']
 
-        if 0 <= head_x + dx < self.field_width and 0 <= head_y + dy < self.field_height:
-            state[Snake.HEAD_CELL, head_y + dy, head_x + dx] = 0.5
-
-        if 0 <= head_x + dy < self.field_width and 0 <= head_y - dx < self.field_height:
-            state[Snake.HEAD_CELL, head_y - dx, head_x + dy] = 0.5
-
-        if 0 <= head_x - dy < self.field_width and 0 <= head_y + dx < self.field_height:
-            state[Snake.HEAD_CELL, head_y + dx, head_x - dy] = 0.5
+        state[Snake.HEAD_CELL, head_y, head_x] = 1
+        state[Snake.HEAD_CELL, head_y + dy, head_x + dx] = 0.5
+        state[Snake.HEAD_CELL, head_y - dx, head_x + dy] = 0.5
+        state[Snake.HEAD_CELL, head_y + dx, head_x - dy] = 0.5
 
         for cell in self.snake:
-            state[Snake.SNAKE_CELL, cell['y'], cell['x']] = 1
+            state[Snake.SNAKE_CELL, cell['y'] + 1, cell['x'] + 1] = 1
 
         return state
 
