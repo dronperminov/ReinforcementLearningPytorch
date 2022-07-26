@@ -30,6 +30,8 @@ class Model(torch.nn.Module):
 
         if activation == "relu":
             self.layers.append(torch.nn.ReLU())
+        elif activation == "leaky-relu":
+            self.layers.append(torch.nn.LeakyReLU())
         elif activation == "sigmoid":
             self.layers.append(torch.nn.Sigmoid())
         elif activation == "tanh":
