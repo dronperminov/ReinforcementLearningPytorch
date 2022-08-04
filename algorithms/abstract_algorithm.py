@@ -34,6 +34,7 @@ class AbstractAlgorithm:
         self.font_size = max(self.width // 40, 12)
         self.font = pygame.font.SysFont('Arial', self.font_size)
         self.screen = config['screen']
+        self.rect = pygame.Rect(self.x0, self.y0, self.total_width, self.total_height)
 
     @abc.abstractmethod
     def run(self, draw: bool = True):
@@ -44,6 +45,7 @@ class AbstractAlgorithm:
         pass
 
     def draw(self):
+        pygame.draw.rect(self.screen, (255, 255, 255), self.rect, 0)
         img = self.environment.draw(self.width, self.height)
         surf = pygame.surfarray.make_surface(img.swapaxes(0, 1))
         self.screen.blit(surf, (self.x0, self.y0 + 25))
@@ -57,6 +59,8 @@ class AbstractAlgorithm:
         info = [f"{key}: {value}" for key, value in self.info_keys.items()]
         self.__draw_text(", ".join(info), self.x0 + self.total_width // 2, self.y0 + self.height + 30, 'center', 'top')
         self.__draw_text(self.get_title(), self.x0 + self.total_width // 2, self.y0 + 5, 'center', 'top')
+        pygame.event.pump()
+        pygame.display.update(self.rect)
 
     def end_episode(self, episode_reward: float, info: dict):
         if self.plot_rewards:

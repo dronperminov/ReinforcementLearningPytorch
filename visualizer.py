@@ -1,5 +1,3 @@
-import time
-
 import pygame
 from pygame.locals import DOUBLEBUF, QUIT, KEYDOWN, KEYUP
 import threading
@@ -111,21 +109,12 @@ class Visualizer:
 
     def __run_algorithm(self, algorithm: AbstractAlgorithm):
         while True:
-            algorithm.run(False)
-
-    def draw(self):
-        pygame.draw.rect(self.screen, (255, 255, 255), pygame.Rect(0, 0, self.total_width, self.total_height), 0)
-
-        for algorithm in self.algorithms:
-            algorithm.draw()
-
-        pygame.event.pump()
-        pygame.display.flip()
+            algorithm.run(True)
 
     def run(self):
-        for algorithm in self.algorithms:
+        for algorithm in self.algorithms[1:]:
             thread = threading.Thread(target=self.__run_algorithm, args=(algorithm, ), daemon=True)
             thread.start()
 
         while True:
-            self.draw()
+            self.__run_algorithm(self.algorithms[0])
