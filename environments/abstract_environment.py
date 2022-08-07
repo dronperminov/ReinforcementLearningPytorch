@@ -19,3 +19,7 @@ class AbstractEnvironment:
     @abc.abstractmethod
     def draw(self, width: int, height: int) -> np.ndarray:
         pass
+
+    @abc.abstractmethod
+    def get_title(self) -> str:
+        pass

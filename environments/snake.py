@@ -20,10 +20,10 @@ class Snake(AbstractEnvironment):
     SNAKE_CELL = 1
     FOOD_CELL = 2
 
-    def __init__(self, field_width: int = 15, field_height: int = 10, use_conv: bool = False):
+    def __init__(self, field_width: int = 15, field_height: int = 10, frames_count: int = 0):
         self.field_width = field_width
         self.field_height = field_height
-        self.use_conv = use_conv
+        self.frames_count = frames_count
         super().__init__()
 
         self.screen = None
@@ -31,9 +31,11 @@ class Snake(AbstractEnvironment):
         self.food = None
         self.direction = None
         self.steps_without_food = 0
+        self.prev_frames = None
+        self.prev_frames_index = 0
 
         self.action_space_shape = 3
-        self.observation_space_shape = (3, self.field_height + 2, self.field_width + 2) if self.use_conv else 43
+        self.observation_space_shape = (self.frames_count, self.field_height, self.field_width) if self.frames_count > 0 else 43
         self.info = {
             'length': Snake.INITIAL_LENGTH,
             'max_length': Snake.INITIAL_LENGTH,
@@ -48,7 +50,8 @@ class Snake(AbstractEnvironment):
         self.direction = {'dx': 0, 'dy': -1}
         self.steps_without_food = 0
         self.info['length'] = Snake.INITIAL_LENGTH
-
+        self.prev_frames = [self.get_curr_frame() for _ in range(self.frames_count)]
+        self.prev_frames_index = 0
         return self.__get_state()
 
     def step(self, action: int) -> Tuple[np.ndarray, float, bool, dict]:
@@ -78,6 +81,9 @@ class Snake(AbstractEnvironment):
                 self.__draw_cell(img, i, j, cell_width, cell_height, (204, 204, 204))
 
         return img
+
+    def get_title(self) -> str:
+        return f"snake_{self.field_width}x{self.field_height}_frames{self.frames_count}"
 
     def __init_snake(self):
         snake = []
@@ -164,27 +170,22 @@ class Snake(AbstractEnvironment):
         return [dx * i / (self.field_width - 1), dy * i / (self.field_height - 1)]
 
     def __state_to_tensor(self):
+        self.prev_frames[self.prev_frames_index] = self.get_curr_frame()
+        self.prev_frames_index = (self.prev_frames_index + 1) % self.frames_count
+
         state = np.zeros(self.observation_space_shape)
-        state[Snake.FOOD_CELL, self.food['y'] + 1, self.food['x'] + 1] = 1
 
-        for i in range(self.field_width + 2):
-            state[:, 0, i] = -1
-            state[:, self.field_height + 1, i] = -1
+        for i in range(self.frames_count):
+            state[i] = self.prev_frames[(self.prev_frames_index + i) % self.frames_count]
 
-        for i in range(self.field_height + 2):
-            state[:, i, 0] = -1
-            state[:, i, self.field_width + 1] = -1
+        return state
 
-        head_x, head_y = self.snake[0]['x'] + 1, self.snake[0]['y'] + 1
-        dx, dy = self.direction['dx'], self.direction['dy']
-
-        state[Snake.HEAD_CELL, head_y, head_x] = 1
-        state[Snake.HEAD_CELL, head_y + dy, head_x + dx] = 0.5
-        state[Snake.HEAD_CELL, head_y - dx, head_x + dy] = 0.5
-        state[Snake.HEAD_CELL, head_y + dx, head_x - dy] = 0.5
+    def get_curr_frame(self):
+        state = np.zeros((self.field_height, self.field_width))
+        state[self.food['y'], self.food['x']] = -1
 
         for cell in self.snake:
-            state[Snake.SNAKE_CELL, cell['y'] + 1, cell['x'] + 1] = 1
+            state[cell['y'], cell['x']] = 1
 
         return state
 
@@ -246,7 +247,7 @@ class Snake(AbstractEnvironment):
         return np.array(vector)
 
     def __get_state(self):
-        if self.use_conv:
+        if self.frames_count > 0:
             return self.__state_to_tensor()
 
         return self.__state_to_vector()
