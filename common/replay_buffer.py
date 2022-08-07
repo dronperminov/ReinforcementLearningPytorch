@@ -5,48 +5,43 @@ import torch
 
 
 class ReplayBuffer:
-    def __init__(self, max_size: int):
+    def __init__(self, max_size: int, state_shape: np.shape, device: str):
         self.max_size = max_size
-        self.buffer = []
+        self.state_shape = state_shape
+        self.device = device
+
+        self.states = torch.zeros((max_size, *state_shape), device=device, dtype=torch.float)
+        self.actions = torch.zeros((max_size, 1), device=device, dtype=torch.long)
+        self.rewards = torch.zeros((max_size, 1), device=device, dtype=torch.float)
+        self.next_states = torch.zeros((max_size, *state_shape), device=device, dtype=torch.float)
+        self.dones = torch.zeros((max_size, 1), device=device, dtype=torch.long)
+
         self.position = 0
+        self.size = 0
 
     def clear(self):
-        self.buffer.clear()
         self.position = 0
+        self.size = 0
 
     def add(self, state, action, reward, next_state, done):
-        replay = {
-            'state': state,
-            'action': action,
-            'reward': reward,
-            'next_state': next_state,
-            'done': done
-        }
-
-        if len(self.buffer) < self.max_size:
-            self.buffer.append(replay)
-        else:
-            self.buffer[self.position] = replay
-            self.position = (self.position + 1) % self.max_size
+        self.states[self.position] = torch.from_numpy(state)
+        self.actions[self.position][0] = action
+        self.rewards[self.position][0] = reward
+        self.next_states[self.position] = torch.from_numpy(next_state)
+        self.dones[self.position][0] = done
+        self.position = (self.position + 1) % self.max_size
+        self.size = min(self.size + 1, self.max_size)
 
     def __len__(self):
-        return len(self.buffer)
+        return self.size
 
-    def sample(self, batch_size: int, device: str) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
-        experience = np.random.choice(self.buffer, batch_size)
-        states, actions, rewards, next_states, dones = [], [], [], [], []
+    def sample(self, batch_size: int) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+        indices = np.random.randint(0, self.size, size=batch_size)
 
-        for v in experience:
-            states.append(v['state'])
-            actions.append(v['action'])
-            rewards.append(v['reward'])
-            next_states.append(v['next_state'])
-            dones.append(v['done'])
-
-        states = torch.from_numpy(np.array(states)).float().to(device)
-        actions = torch.from_numpy(np.vstack(actions)).long().to(device)
-        rewards = torch.from_numpy(np.vstack(rewards)).float().to(device)
-        next_states = torch.from_numpy(np.array(next_states)).float().to(device)
-        dones = torch.from_numpy(np.vstack(dones)).float().to(device)
+        states = self.states[indices]
+        actions = self.actions[indices]
+        rewards = self.rewards[indices]
+        next_states = self.next_states[indices]
+        dones = self.dones[indices]
 
         return states, actions, rewards, next_states, dones
