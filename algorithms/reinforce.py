@@ -12,7 +12,7 @@ class Reinforce(AbstractAlgorithm):
         super().__init__(environment, config)
 
         self.gamma = config.get('gamma', 0.9)
-        self.save_model_path = config.get("save_model_path", f"reinforce_gamma{self.gamma}.pth")
+        self.save_model_path = config.get("save_model_path", self.__get_default_model_name())
 
         if 'seed' in config:
             seed = config['seed']
@@ -57,6 +57,10 @@ class Reinforce(AbstractAlgorithm):
         action = distribution.sample()
         log_prob = distribution.log_prob(action)
         return action.item(), log_prob
+
+    def __get_default_model_name(self) -> str:
+        env_title = self.environment.get_title()
+        return f"{env_title}_reinforce_gamma{self.gamma}.pth"
 
     def get_discounted_rewards(self):
         discounted_rewards = []

@@ -12,7 +12,7 @@ class ActorCritic(AbstractAlgorithm):
         super().__init__(environment, config)
 
         self.gamma = config.get('gamma', 0.9)
-        self.save_model_path = config.get("save_model_path", f"ac_gamma{self.gamma}.pth")
+        self.save_model_path = config.get("save_model_path", self.__get_default_model_name())
 
         if 'seed' in config:
             seed = config['seed']
@@ -50,6 +50,10 @@ class ActorCritic(AbstractAlgorithm):
             return torch.optim.Adam(self.agent.parameters(), lr=learning_rate)
 
         raise ValueError(f"Unknown optimizer \"{name}\"")
+
+    def __get_default_model_name(self) -> str:
+        env_title = self.environment.get_title()
+        return f"{env_title}_ac_gamma{self.gamma}.pth"
 
     def get_action(self, state: np.ndarray):
         state = torch.from_numpy(state).float().unsqueeze(0).to(self.device)

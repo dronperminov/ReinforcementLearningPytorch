@@ -14,7 +14,7 @@ class ProximalPolicyOptimization(AbstractAlgorithm):
         self.gamma = config.get('gamma', 0.9)
         self.ppo_steps = config.get('ppo_steps', 5)
         self.ppo_clip = config.get('ppo_clip', 0.2)
-        self.save_model_path = config.get("save_model_path", f"ppo_gamma{self.gamma}_steps{self.ppo_steps}_clip{self.ppo_clip}.pth")
+        self.save_model_path = config.get("save_model_path", self.__get_default_model_name())
 
         if 'seed' in config:
             seed = config['seed']
@@ -54,6 +54,10 @@ class ProximalPolicyOptimization(AbstractAlgorithm):
             return torch.optim.Adam(self.agent.parameters(), lr=learning_rate)
 
         raise ValueError(f"Unknown optimizer \"{name}\"")
+
+    def __get_default_model_name(self) -> str:
+        env_title = self.environment.get_title()
+        return f"{env_title}_ppo_gamma{self.gamma}_steps{self.ppo_steps}_clip{self.ppo_clip}.pth"
 
     def get_action(self, state: np.ndarray):
         state = torch.from_numpy(state).float().unsqueeze(0).to(self.device)
