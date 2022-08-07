@@ -31,9 +31,13 @@ class AbstractAlgorithm:
         self.total_height = self.height + 25 + (25 if len(self.info_keys) else 0)
 
         self.avg_len = config['avg_len']
+        self.screen = config['screen']
+
+        if self.screen is None:
+            return
+
         self.font_size = max(self.width // 40, 12)
         self.font = pygame.font.SysFont('Arial', self.font_size)
-        self.screen = config['screen']
         self.rect = pygame.Rect(self.x0, self.y0, self.total_width, self.total_height)
 
     @abc.abstractmethod
@@ -45,6 +49,9 @@ class AbstractAlgorithm:
         pass
 
     def draw(self):
+        if self.screen is None:
+            return
+
         pygame.draw.rect(self.screen, (255, 255, 255), self.rect, 0)
         img = self.environment.draw(self.width, self.height)
         surf = pygame.surfarray.make_surface(img.swapaxes(0, 1))
@@ -69,13 +76,15 @@ class AbstractAlgorithm:
         for key in self.plot_keys:
             self.__append_plot(key, info[key])
 
+        print_info = []
         for key in self.info_keys:
             if key in info:
                 self.info_keys[key] = info[key]
+                print_info.append(f"{key}: {info[key]}")
 
         self.episode += 1
         self.info_keys['episode'] = f'{self.episode}'
-        print(f'End episode {self.episode} with reward {episode_reward}')
+        print(f'End episode {self.episode} with reward {episode_reward}. {", ".join(print_info)}')
 
     def __draw_text(self, text: str, x: int, y: int, text_align: str, text_baseline: str):
         text_surf = self.font.render(text, False, (0, 0, 0))

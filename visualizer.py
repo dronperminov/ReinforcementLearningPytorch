@@ -87,6 +87,11 @@ class Visualizer:
         self.columns = view_config.get('columns', 1)
         self.algorithm_width = self.width * (1 + len(self.plot_keys) + self.plot_rewards)
         self.algorithm_height = self.height + 25 + (25 if len(self.info_keys) else 0)
+        self.use_gui = view_config.get('use_gui', True)
+        self.screen = None
+
+        if not self.use_gui:
+            return
 
         pygame.init()
         pygame.display.set_caption(view_config.get('caption', 'Reinforcement learning sandbox'))
