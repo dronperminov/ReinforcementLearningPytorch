@@ -7,8 +7,10 @@ import torch
 class ReplayBuffer:
     def __init__(self, max_size: int, state_shape: np.shape, device: str):
         self.max_size = max_size
-        self.state_shape = state_shape
         self.device = device
+
+        if isinstance(state_shape, int):
+            state_shape = (state_shape, )
 
         self.states = torch.zeros((max_size, *state_shape), device=device, dtype=torch.float)
         self.actions = torch.zeros((max_size, 1), device=device, dtype=torch.long)

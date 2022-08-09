@@ -5,7 +5,7 @@ import numpy as np
 from environments.abstract_environment import AbstractEnvironment
 from algorithms.abstract_algorithm import AbstractAlgorithm
 from common.replay_buffer import ReplayBuffer
-from common.model import Model
+from common.model import Model, DuelingModel
 
 
 class DQN(AbstractAlgorithm):
@@ -21,6 +21,7 @@ class DQN(AbstractAlgorithm):
         self.tau = config.get('tau', None)
 
         self.ddqn = config.get('ddqn', False)
+        self.dueling = config.get('dueling', False)
 
         self.train_model_period = config.get('train_model_period', 4)
         self.update_target_model_period = config.get('update_target_model_period', 500)
@@ -55,8 +56,12 @@ class DQN(AbstractAlgorithm):
         self.replay_buffer = ReplayBuffer(config.get('max_replay_size', 10000), environment.observation_space_shape, self.device)
 
     def __init_agent(self, architecture: List[dict]) -> torch.nn.Module:
-        last_layer = {'type': 'dense', 'size': self.environment.action_space_shape}
-        agent = Model(architecture + [last_layer], self.environment.observation_space_shape)
+        if self.dueling:
+            agent = DuelingModel(architecture, self.environment.observation_space_shape, self.environment.action_space_shape)
+        else:
+            last_layer = {'type': 'dense', 'size': self.environment.action_space_shape}
+            agent = Model(architecture + [last_layer], self.environment.observation_space_shape)
+
         agent.to(self.device)
         return agent
 
@@ -71,7 +76,7 @@ class DQN(AbstractAlgorithm):
 
     def __get_default_model_name(self) -> str:
         env_title = self.environment.get_title()
-        dqn_title = f"{'soft_' if self.tau else ''}{'d' if self.ddqn else ''}dqn"
+        dqn_title = f"{'soft_' if self.tau else ''}{'dueling_' if self.dueling else ''}{'d' if self.ddqn else ''}dqn"
         return f"{env_title}_{dqn_title}_gamma{self.gamma}_batch_size{self.batch_size}.pth"
 
     def get_action(self, state: np.ndarray):
@@ -147,7 +152,7 @@ class DQN(AbstractAlgorithm):
         self.epsilon = self.min_epsilon + (self.max_epsilon - self.min_epsilon) * np.exp(-self.decay * self.episode)
 
     def get_title(self) -> str:
-        name = f"{'Soft ' if self.tau else ''}{'D' if self.ddqn else ''}DQN"
+        name = f"{'Soft ' if self.tau else ''}{'Dueling ' if self.dueling else ''}{'Double ' if self.ddqn else ''}DQN"
         params = [
             f"gamma: {self.gamma}",
             f"batch_size: {self.batch_size}",
