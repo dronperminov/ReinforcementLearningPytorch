@@ -6,6 +6,7 @@ from environments.abstract_environment import AbstractEnvironment
 from algorithms.abstract_algorithm import AbstractAlgorithm
 from common.replay_buffer import ReplayBuffer
 from common.model import Model, DuelingModel
+from common.optimizer_builder import OptimizerBuilder
 
 
 class DQN(AbstractAlgorithm):
@@ -49,7 +50,7 @@ class DQN(AbstractAlgorithm):
         self.model.train()
         self.target_model.eval()
 
-        self.optimizer = self.__init_optimizer(config['optimizer'], config['learning_rate'])
+        self.optimizer = OptimizerBuilder.build(config['optimizer'], config['learning_rate'], self.model.parameters())
         self.loss = torch.nn.SmoothL1Loss()
 
         self.min_replay_size = config.get('min_replay_size', 1000)
@@ -64,15 +65,6 @@ class DQN(AbstractAlgorithm):
 
         agent.to(self.device)
         return agent
-
-    def __init_optimizer(self, name: str, learning_rate: float):
-        if name == 'sgd':
-            return torch.optim.SGD(self.model.parameters(), lr=learning_rate)
-
-        if name == 'adam':
-            return torch.optim.Adam(self.model.parameters(), lr=learning_rate)
-
-        raise ValueError(f"Unknown optimizer \"{name}\"")
 
     def __get_default_model_name(self) -> str:
         env_title = self.environment.get_title()
@@ -152,7 +144,13 @@ class DQN(AbstractAlgorithm):
         self.epsilon = self.min_epsilon + (self.max_epsilon - self.min_epsilon) * np.exp(-self.decay * self.episode)
 
     def get_title(self) -> str:
-        name = f"{'Soft ' if self.tau else ''}{'Dueling ' if self.dueling else ''}{'Double ' if self.ddqn else ''}DQN"
+        names = [
+            'Soft ' if self.tau else '',
+            'Dueling ' if self.dueling else '',
+            'Double ' if self.ddqn else '',
+            'DQN'
+        ]
+
         params = [
             f"gamma: {self.gamma}",
             f"batch_size: {self.batch_size}",
@@ -161,4 +159,4 @@ class DQN(AbstractAlgorithm):
             f"update_period: {self.update_target_model_period}"
         ]
 
-        return f"{name} ({', '.join(params)})"
+        return f"{''.join(names)} ({', '.join(params)})"

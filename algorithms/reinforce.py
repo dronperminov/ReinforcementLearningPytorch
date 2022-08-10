@@ -5,6 +5,7 @@ import numpy as np
 from environments.abstract_environment import AbstractEnvironment
 from algorithms.abstract_algorithm import AbstractAlgorithm
 from common.model import Model
+from common.optimizer_builder import OptimizerBuilder
 
 
 class Reinforce(AbstractAlgorithm):
@@ -28,7 +29,7 @@ class Reinforce(AbstractAlgorithm):
             self.agent.load_state_dict(torch.load(config['agent_weights']))
             print(f'Model weights were loaded from "{config["agent_weights"]}"')
 
-        self.optimizer = self.__init_optimizer(config['optimizer'], config['learning_rate'])
+        self.optimizer = OptimizerBuilder.build(config['optimizer'], config['learning_rate'], self.agent.parameters())
 
         self.best_reward = float('-inf')
         self.log_probs = []
@@ -40,15 +41,6 @@ class Reinforce(AbstractAlgorithm):
         agent.to(self.device)
         agent.train()
         return agent
-
-    def __init_optimizer(self, name: str, learning_rate: float):
-        if name == 'sgd':
-            return torch.optim.SGD(self.agent.parameters(), lr=learning_rate)
-
-        if name == 'adam':
-            return torch.optim.Adam(self.agent.parameters(), lr=learning_rate)
-
-        raise ValueError(f"Unknown optimizer \"{name}\"")
 
     def get_action(self, state: np.ndarray):
         state = torch.from_numpy(state).float().unsqueeze(0).to(self.device)

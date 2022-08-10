@@ -88,18 +88,10 @@ class Model(torch.nn.Module):
 
 
 class DuelingModel(Model):
-    def __init__(self, configuration: List[dict], input_shape: int, output_shape: int, size: int = 128):
+    def __init__(self, configuration: List[dict], input_shape: int, output_shape: int):
         super(DuelingModel, self).__init__(configuration, input_shape)
-        self.value = torch.nn.Sequential(
-            torch.nn.Linear(in_features=self.output_shape, out_features=size),
-            torch.nn.ReLU(),
-            torch.nn.Linear(in_features=size, out_features=1)
-        )
-        self.advantage = torch.nn.Sequential(
-            torch.nn.Linear(in_features=self.output_shape, out_features=size),
-            torch.nn.ReLU(),
-            torch.nn.Linear(in_features=size, out_features=output_shape)
-        )
+        self.value = torch.nn.Linear(in_features=self.output_shape, out_features=1)
+        self.advantage = torch.nn.Linear(in_features=self.output_shape, out_features=output_shape)
 
     def forward(self, x):
         features = self.features(x)
