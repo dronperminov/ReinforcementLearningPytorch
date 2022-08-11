@@ -263,7 +263,7 @@ class Snake(AbstractEnvironment):
             return -4
 
         if move == Snake.EAT_FOOD:
-            return len(self.snake)
+            return 1
 
         head = self.snake[0]
         prev_dx = head['x'] - self.direction['dx'] - self.food['x']
