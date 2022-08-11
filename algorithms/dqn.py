@@ -5,6 +5,7 @@ import numpy as np
 from environments.abstract_environment import AbstractEnvironment
 from algorithms.abstract_algorithm import AbstractAlgorithm
 from common.replay_buffer import ReplayBuffer
+from common.prioritized_replay_buffer import PrioritizedReplayBuffer
 from common.model import Model, DuelingModel
 from common.optimizer_builder import OptimizerBuilder
 
@@ -23,6 +24,7 @@ class DQN(AbstractAlgorithm):
 
         self.ddqn = config.get('ddqn', False)
         self.dueling = config.get('dueling', False)
+        self.use_per = config.get('use_per', False)
 
         self.train_model_period = config.get('train_model_period', 4)
         self.update_target_model_period = config.get('update_target_model_period', 500)
@@ -51,10 +53,15 @@ class DQN(AbstractAlgorithm):
         self.target_model.eval()
 
         self.optimizer = OptimizerBuilder.build(config['optimizer'], config['learning_rate'], self.model.parameters())
-        self.loss = torch.nn.SmoothL1Loss()
+        self.loss = torch.nn.SmoothL1Loss(reduction='none')
 
         self.min_replay_size = config.get('min_replay_size', 1000)
-        self.replay_buffer = ReplayBuffer(config.get('max_replay_size', 10000), environment.observation_space_shape, self.device)
+        self.max_replay_size = config.get('max_replay_size', 10000)
+
+        if self.use_per:
+            self.replay_buffer = PrioritizedReplayBuffer(self.max_replay_size, environment.observation_space_shape, self.device)
+        else:
+            self.replay_buffer = ReplayBuffer(self.max_replay_size, environment.observation_space_shape, self.device)
 
     def __init_agent(self, architecture: List[dict]) -> torch.nn.Module:
         if self.dueling:
@@ -68,7 +75,7 @@ class DQN(AbstractAlgorithm):
 
     def __get_default_model_name(self) -> str:
         env_title = self.environment.get_title()
-        dqn_title = f"{'soft_' if self.tau else ''}{'dueling_' if self.dueling else ''}{'d' if self.ddqn else ''}dqn"
+        dqn_title = f"{'soft_' if self.tau else ''}{'dueling_' if self.dueling else ''}{'d' if self.ddqn else ''}dqn{'_per' if self.use_per else ''}"
         return f"{env_title}_{dqn_title}_gamma{self.gamma}_batch_size{self.batch_size}.pth"
 
     def get_action(self, state: np.ndarray):
@@ -86,7 +93,11 @@ class DQN(AbstractAlgorithm):
         if len(self.replay_buffer) < self.min_replay_size:
             return
 
-        states, actions, rewards, next_states, dones = self.replay_buffer.sample(self.batch_size)
+        if self.use_per:
+            (states, actions, rewards, next_states, dones), indices, importance = self.replay_buffer.sample(self.batch_size)
+            importance = importance ** (1 - self.epsilon)
+        else:
+            states, actions, rewards, next_states, dones = self.replay_buffer.sample(self.batch_size)
 
         with torch.no_grad():
             if self.ddqn:
@@ -100,8 +111,13 @@ class DQN(AbstractAlgorithm):
         predicted_targets = self.model(states).gather(1, actions)
         loss = self.loss(predicted_targets, labels)
 
+        if self.use_per:
+            with torch.no_grad():
+                loss *= importance
+                self.replay_buffer.update(indices, torch.abs(predicted_targets - labels))
+
         self.optimizer.zero_grad()
-        loss.backward()
+        loss.mean().backward()
         self.optimizer.step()
 
     def __update_target_model(self, is_soft: bool = False):
@@ -148,7 +164,8 @@ class DQN(AbstractAlgorithm):
             'Soft ' if self.tau else '',
             'Dueling ' if self.dueling else '',
             'Double ' if self.ddqn else '',
-            'DQN'
+            'DQN',
+            ' with PER' if self.use_per else ''
         ]
 
         params = [
