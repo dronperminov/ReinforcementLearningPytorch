@@ -1,0 +1,57 @@
+{
+    "environment": {
+        "name": "snake",
+        "config": {
+            "field_width": 15,
+            "field_height": 10,
+            "frames_count": 4
+        }
+    },
+
+    "view_config": {
+        "width": 302,
+        "height": 202,
+        "use_gui": true,
+        "plot_rewards": true,
+        "plot_keys": ["length"],
+        "info_keys": ["wall", "eat_self", "no_eat", "length", "max_length"],
+        "columns": 1,
+        "caption": "Snake (convolution network)"
+    },
+
+    "algorithms": [
+        {
+            "name": "dqn",
+            "ddqn": true,
+            "dueling": true,
+
+            "gamma": 0.9,
+            "seed": 42,
+
+            "batch_size": 64,
+            "min_replay_size": 1000,
+            "max_replay_size": 50000,
+
+            "max_epsilon": 1,
+            "min_epsilon": 0.05,
+            "decay": 0.005,
+            "tau": 1e-3,
+
+            "train_model_period": 4,
+            "update_target_model_period": 4,
+            "use_per": true,
+
+            "optimizer": "adam",
+            "learning_rate": 0.001,
+
+            "agent_architecture": [
+                {"type": "conv", "fc": 32, "fs": 7, "padding": 3, "activation": "leaky-relu", "stride": 2},
+                {"type": "conv", "fc": 64, "fs": 5, "padding": 2, "activation": "leaky-relu", "stride": 2},
+                {"type": "conv", "fc": 128, "fs": 3, "padding": 1, "activation": "leaky-relu", "stride": 2},
+                {"type": "conv", "fc": 256, "fs": 3, "padding": 1, "activation": "leaky-relu", "stride": 2},
+                {"type": "flatten"},
+                {"type": "dense", "size": 256, "activation": "leaky-relu"}
+            ]
+        }
+    ]
+}

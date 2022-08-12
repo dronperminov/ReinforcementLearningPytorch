@@ -1,0 +1,39 @@
+{
+    "environment": {
+        "name": "snake",
+        "config": {
+            "field_width": 15,
+            "field_height": 10,
+            "frames_count": 0
+        }
+    },
+
+    "view_config": {
+        "width": 302,
+        "height": 202,
+        "use_gui": true,
+        "plot_rewards": true,
+        "plot_keys": ["length"],
+        "info_keys": ["wall", "eat_self", "no_eat", "length", "max_length"],
+        "columns": 1,
+        "caption": "Snake"
+    },
+
+    "algorithms": [
+        {
+            "name": "ppo",
+            "gamma": 0.9,
+            "seed": 42,
+            "ppo_steps": 5,
+            "ppo_clip": 0.2,
+
+            "optimizer": "adam",
+            "learning_rate": 0.001,
+
+            "agent_architecture": [
+                {"type": "dense", "size": 256, "activation": "leaky-relu"},
+                {"type": "dense", "size": 256, "activation": "leaky-relu"}
+            ]
+        }
+    ]
+}
