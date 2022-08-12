@@ -76,7 +76,7 @@ class Reinforce(AbstractAlgorithm):
             policy_loss.append(-log_prob * reward)
 
         self.optimizer.zero_grad()
-        policy_loss = sum(policy_loss)
+        policy_loss = sum(policy_loss) / len(policy_loss)
         policy_loss.backward()
         self.optimizer.step()
         self.rewards.clear()

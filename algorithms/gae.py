@@ -95,8 +95,8 @@ class GeneralizedAdvantageEstimation(AbstractAlgorithm):
         discounted_rewards = discounted_rewards.detach()
 
         self.optimizer.zero_grad()
-        policy_loss = -(advantages * log_prob_actions).sum()
-        value_loss = self.loss(discounted_rewards, values).sum()
+        policy_loss = -(advantages * log_prob_actions).mean()
+        value_loss = self.loss(discounted_rewards, values)
         loss = policy_loss + value_loss
         loss.backward()
         self.optimizer.step()
