@@ -18,6 +18,8 @@ class Model(torch.nn.Module):
                 self.__add_conv(layers, layer_config)
             elif layer_type == "maxpool":
                 self.__add_maxpool(layers, layer_config)
+            elif layer_type == "global_maxpool":
+                self.__add_maxpool(layers, {'scale': (self.output_shape[1], self.output_shape[2])})
             elif layer_type == "flatten":
                 self.__add_flatten(layers, )
             else:
@@ -72,10 +74,10 @@ class Model(torch.nn.Module):
         ]
 
     def __add_maxpool(self, layers: List[torch.nn.Module], config: dict):
-        scale = config.get('scale', 2)
-        layers.append(torch.nn.MaxPool2d(kernel_size=scale))
+        scale = config.get('scale', (2, 2))
+        layers.append(torch.nn.MaxPool2d(kernel_size=tuple(scale)))
         d, h, w = self.output_shape
-        self.output_shape = [d, h // scale, w // scale]
+        self.output_shape = [d, h // scale[0], w // scale[1]]
 
     def __add_flatten(self, layers: List[torch.nn.Module]):
         layers.append(torch.nn.Flatten())
