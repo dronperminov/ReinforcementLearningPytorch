@@ -23,7 +23,7 @@ class DQN(AbstractAlgorithm):
         self.tau = config.get('tau', None)
 
         self.ddqn = config.get('ddqn', False)
-        self.dueling = config.get('dueling', False)
+        self.model_type = config.get('model_type', 'dqn')
         self.use_per = config.get('use_per', False)
 
         self.train_model_period = config.get('train_model_period', 4)
@@ -64,19 +64,35 @@ class DQN(AbstractAlgorithm):
             self.replay_buffer = ReplayBuffer(self.max_replay_size, environment.observation_space_shape, self.device)
 
     def __init_agent(self, architecture: List[dict]) -> torch.nn.Module:
-        if self.dueling:
+        if self.model_type == 'dueling':
             agent = DuelingModel(architecture, self.environment.observation_space_shape, self.environment.action_space_shape)
-        else:
+        elif self.model_type == '':
             last_layer = {'type': 'dense', 'size': self.environment.action_space_shape}
             agent = Model(architecture + [last_layer], self.environment.observation_space_shape)
+        else:
+            raise ValueError(f'Unknown model type "{self.model_type}"')
 
         agent.to(self.device)
         return agent
 
     def __get_default_model_name(self) -> str:
         env_title = self.environment.get_title()
-        dqn_title = f"{'soft_' if self.tau else ''}{'dueling_' if self.dueling else ''}{'d' if self.ddqn else ''}dqn{'_per' if self.use_per else ''}"
-        return f"{env_title}_{dqn_title}_gamma{self.gamma}_batch_size{self.batch_size}.pth"
+        names = "".join([
+            'soft_' if self.tau else '',
+            f'{self.model_type}' if self.model_type != '' else '',
+            'double_' if self.ddqn else '',
+            'dqn',
+            '_per' if self.use_per else ''
+        ])
+
+        params = "_".join([
+            f"gamma{self.gamma}",
+            f"batch_size{self.batch_size}",
+            f"train_period{self.train_model_period}",
+            f"update_period{self.update_target_model_period}"
+        ])
+
+        return f"{env_title}_{names}_{params}.pth"
 
     def get_action(self, state: np.ndarray):
         if np.random.random() < self.epsilon:
@@ -144,6 +160,7 @@ class DQN(AbstractAlgorithm):
             self.steps += 1
             episode_reward += reward
             state = next_state
+            info['epsilon'] = self.epsilon
 
             if done and episode_reward > self.best_reward:
                 self.best_reward = episode_reward
@@ -160,20 +177,20 @@ class DQN(AbstractAlgorithm):
         self.epsilon = self.min_epsilon + (self.max_epsilon - self.min_epsilon) * np.exp(-self.decay * self.episode)
 
     def get_title(self) -> str:
-        names = [
+        names = "".join([
             'Soft ' if self.tau else '',
-            'Dueling ' if self.dueling else '',
+            f'{self.model_type.title()} ' if self.model_type != '' else '',
             'Double ' if self.ddqn else '',
             'DQN',
             ' with PER' if self.use_per else ''
-        ]
+        ])
 
-        params = [
+        params = ", ".join([
             f"gamma: {self.gamma}",
             f"batch_size: {self.batch_size}",
             f"eps: {self.epsilon:.3f}",
             f"train_period: {self.train_model_period}",
             f"update_period: {self.update_target_model_period}"
-        ]
+        ])
 
-        return f"{''.join(names)} ({', '.join(params)})"
+        return f"{names} ({params})"
