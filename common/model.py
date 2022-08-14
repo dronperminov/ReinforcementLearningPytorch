@@ -144,6 +144,37 @@ class NoisyModel(Model):
         self.output.reset_noise()
 
 
+class CategoricalModel(Model):
+    def __init__(self, configuration: List[dict], input_shape: int, output_shape: int, size: int, atom_size: int, support: torch.tensor):
+        super(CategoricalModel, self).__init__(configuration, input_shape)
+        self.atom_size = atom_size
+        self.support = support
+
+        if size == 0:
+            self.output = torch.nn.Linear(in_features=self.output_shape, out_features=output_shape * atom_size)
+        else:
+            self.output = torch.nn.Sequential(
+                torch.nn.Linear(in_features=self.output_shape, out_features=size),
+                torch.nn.ReLU(),
+                torch.nn.Linear(in_features=size, out_features=output_shape * atom_size)
+            )
+
+        self.output_shape = output_shape
+
+    def dist(self, x: torch.tensor) -> torch.tensor:
+        x = self.features(x)
+        x = self.output(x)
+        q_atoms = x.view(-1, self.output_shape, self.atom_size)
+        dist = torch.nn.functional.softmax(q_atoms, dim=-1)
+        dist = dist.clamp(min=1e-3)
+        return dist
+
+    def forward(self, x):
+        dist = self.dist(x)
+        q = torch.sum(dist * self.support, dim=2)
+        return q
+
+
 class ActorCriticModel(Model):
     def __init__(self, configuration: List[dict], input_shape: int, output_shape: int):
         super(ActorCriticModel, self).__init__(configuration, input_shape)

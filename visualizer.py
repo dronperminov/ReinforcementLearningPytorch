@@ -8,6 +8,7 @@ from environments.snake import Snake
 from algorithms.abstract_algorithm import AbstractAlgorithm
 from algorithms.random_algorithm import RandomAlgorithm
 from algorithms.dqn import DQN
+from algorithms.categorical_dqn import CategoricalDQN
 from algorithms.reinforce import Reinforce
 from algorithms.actor_critic import ActorCritic
 from algorithms.a2c import AdvantageActorCritic
@@ -59,6 +60,9 @@ class Visualizer:
 
         if algorithm_name == "dqn":
             return DQN(environment, algorithm_config)
+
+        if algorithm_name == "categorical_dqn":
+            return CategoricalDQN(environment, algorithm_config)
 
         if algorithm_name == "reinforce":
             return Reinforce(environment, algorithm_config)
