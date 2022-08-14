@@ -8,6 +8,7 @@
 * [Double deep Q network (DDQN)](https://github.com/dronperminov/ReinforcementLearningPytorch/blob/master/algorithms/dqn.py)
 * [Dueling deep Q network (Dueling DQN)](https://github.com/dronperminov/ReinforcementLearningPytorch/blob/master/algorithms/dqn.py)
 * [Noisy deep Q network (Noisy DQN)](https://github.com/dronperminov/ReinforcementLearningPytorch/blob/master/algorithms/dqn.py)
+* [Categorical deep Q network (Categorical DQN)](https://github.com/dronperminov/ReinforcementLearningPytorch/blob/master/algorithms/categorical_dqn.py)
 * в том числе soft версия и использование приоритизированного буфера ([PER](https://github.com/dronperminov/ReinforcementLearningPytorch/blob/master/common/prioritized_replay_buffer.py))
 
 ### Алгоритмы оптимизации политики (policy optimization)
