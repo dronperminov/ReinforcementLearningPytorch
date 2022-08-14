@@ -23,7 +23,7 @@
         {
             "name": "dqn",
             "ddqn": true,
-            "dueling": true,
+            "model_type": "dueling",
 
             "gamma": 0.9,
             "seed": 42,
@@ -49,6 +49,7 @@
                 {"type": "conv", "fc": 64, "fs": 5, "padding": 2, "activation": "leaky-relu", "stride": 2},
                 {"type": "conv", "fc": 128, "fs": 3, "padding": 1, "activation": "leaky-relu", "stride": 2},
                 {"type": "conv", "fc": 256, "fs": 3, "padding": 1, "activation": "leaky-relu", "stride": 2},
+                {"type": "global_maxpool"},
                 {"type": "flatten"},
                 {"type": "dense", "size": 256, "activation": "leaky-relu"}
             ]

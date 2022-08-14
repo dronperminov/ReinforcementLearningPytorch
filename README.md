@@ -7,7 +7,7 @@
 * [Deep Q network (DQN)](https://github.com/dronperminov/ReinforcementLearningPytorch/blob/master/algorithms/dqn.py)
 * [Double deep Q network (DDQN)](https://github.com/dronperminov/ReinforcementLearningPytorch/blob/master/algorithms/dqn.py)
 * [Dueling deep Q network (Dueling DQN)](https://github.com/dronperminov/ReinforcementLearningPytorch/blob/master/algorithms/dqn.py)
-* [Dueling double deep Q network (Dueling DDQN)](https://github.com/dronperminov/ReinforcementLearningPytorch/blob/master/algorithms/dqn.py)
+* [Noisy deep Q network (Noisy DQN)](https://github.com/dronperminov/ReinforcementLearningPytorch/blob/master/algorithms/dqn.py)
 * в том числе soft версия и использование приоритизированного буфера ([PER](https://github.com/dronperminov/ReinforcementLearningPytorch/blob/master/common/prioritized_replay_buffer.py))
 
 ### Алгоритмы оптимизации политики (policy optimization)
@@ -177,7 +177,8 @@
 ### Deep q network (dqn)
 
 * `ddqn` - использование модификации double deep Q network (`false` по умолчанию)
-* `dueling` - использоваине модификации dueling deep Q network (`false` по умолчанию)
+* `model_type` - тип используемой модели: `dueling` / `noisy` (по умолчанию используется обычная `dqn`)
+* `head_size` - размер полносвязного слоя, находящегося перед выходным (по умолчанию `0`)
 * `use_per` - использование приоритизированного буфера опыта (`false` по умолчанию)
 * `batch_size` - размер батча для обучения сети (`128` по умолчанию)
 * `min_replay_size` - минимальный размер буфера опыта до начала обучения (`1000` по умолчанию)

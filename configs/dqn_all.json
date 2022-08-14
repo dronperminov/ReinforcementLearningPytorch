@@ -15,7 +15,7 @@
         "plot_rewards": true,
         "plot_keys": ["length"],
         "info_keys": ["wall", "eat_self", "no_eat", "length", "max_length"],
-        "columns": 2,
+        "columns": 3,
         "caption": "Snake"
     },
 
@@ -41,56 +41,39 @@
         "decay": 0.001,
 
         "train_model_period": 4,
-        "update_target_model_period": 100
+        "update_target_model_period": 100,
+        "use_per": true
     },
 
     "algorithms": [
         {
             "ddqn": false,
-            "dueling": false,
-            "use_per": false
-        },
-
-        {
-            "ddqn": true,
-            "dueling": false,
-            "use_per": false
+            "model_type": ""
         },
 
         {
             "ddqn": false,
-            "dueling": true,
-            "use_per": false
-        },
-
-        {
-            "ddqn": true,
-            "dueling": true,
-            "use_per": false
+            "model_type": "dueling"
         },
 
         {
             "ddqn": false,
-            "dueling": false,
-            "use_per": true
+            "model_type": "noisy"
         },
 
         {
             "ddqn": true,
-            "dueling": false,
-            "use_per": true
-        },
-
-        {
-            "ddqn": false,
-            "dueling": true,
-            "use_per": true
+            "model_type": ""
         },
 
         {
             "ddqn": true,
-            "dueling": true,
-            "use_per": true
+            "model_type": "dueling"
+        },
+
+        {
+            "ddqn": true,
+            "model_type": "noisy"
         }
     ]
 }
