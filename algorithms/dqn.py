@@ -6,7 +6,7 @@ from environments.abstract_environment import AbstractEnvironment
 from algorithms.abstract_algorithm import AbstractAlgorithm
 from common.replay_buffer import ReplayBuffer
 from common.prioritized_replay_buffer import PrioritizedReplayBuffer
-from common.model import Model, DuelingModel
+from common.model import Model, DuelingModel, NoisyModel
 from common.optimizer_builder import OptimizerBuilder
 
 
@@ -23,7 +23,8 @@ class DQN(AbstractAlgorithm):
         self.tau = config.get('tau', None)
 
         self.ddqn = config.get('ddqn', False)
-        self.model_type = config.get('model_type', 'dqn')
+        self.model_type = config.get('model_type', '')
+        self.head_size = config.get('head_size', 0)
         self.use_per = config.get('use_per', False)
 
         self.train_model_period = config.get('train_model_period', 4)
@@ -65,10 +66,17 @@ class DQN(AbstractAlgorithm):
 
     def __init_agent(self, architecture: List[dict]) -> torch.nn.Module:
         if self.model_type == 'dueling':
-            agent = DuelingModel(architecture, self.environment.observation_space_shape, self.environment.action_space_shape)
+            agent = DuelingModel(architecture, self.environment.observation_space_shape, self.environment.action_space_shape, self.head_size)
+        elif self.model_type == 'noisy':
+            agent = NoisyModel(architecture, self.environment.observation_space_shape, self.environment.action_space_shape, self.head_size)
         elif self.model_type == '':
-            last_layer = {'type': 'dense', 'size': self.environment.action_space_shape}
-            agent = Model(architecture + [last_layer], self.environment.observation_space_shape)
+            layers = [*architecture]
+
+            if self.head_size > 0:
+                layers.append({'type': 'dense', 'size': self.head_size, 'activation': 'relu'})
+
+            layers.append({'type': 'dense', 'size': self.environment.action_space_shape})
+            agent = Model(layers, self.environment.observation_space_shape)
         else:
             raise ValueError(f'Unknown model type "{self.model_type}"')
 
@@ -79,7 +87,7 @@ class DQN(AbstractAlgorithm):
         env_title = self.environment.get_title()
         names = "".join([
             'soft_' if self.tau else '',
-            f'{self.model_type}' if self.model_type != '' else '',
+            f'{self.model_type}_' if self.model_type != '' else '',
             'double_' if self.ddqn else '',
             'dqn',
             '_per' if self.use_per else ''
@@ -95,7 +103,7 @@ class DQN(AbstractAlgorithm):
         return f"{env_title}_{names}_{params}.pth"
 
     def get_action(self, state: np.ndarray):
-        if np.random.random() < self.epsilon:
+        if np.random.random() < self.epsilon and self.model_type != 'noisy':
             return np.random.choice(np.arange(self.environment.action_space_shape))
 
         state = torch.from_numpy(state).float().unsqueeze(0).to(self.device)
@@ -136,6 +144,10 @@ class DQN(AbstractAlgorithm):
         loss.mean().backward()
         self.optimizer.step()
 
+        if self.model_type == 'noisy':
+            self.model.reset_noise()
+            self.target_model.reset_noise()
+
     def __update_target_model(self, is_soft: bool = False):
         if is_soft:
             for target_param, param in zip(self.target_model.parameters(), self.model.parameters()):
@@ -160,7 +172,6 @@ class DQN(AbstractAlgorithm):
             self.steps += 1
             episode_reward += reward
             state = next_state
-            info['epsilon'] = self.epsilon
 
             if done and episode_reward > self.best_reward:
                 self.best_reward = episode_reward

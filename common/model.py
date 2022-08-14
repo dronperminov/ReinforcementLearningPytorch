@@ -1,5 +1,6 @@
 from typing import List, Union, Tuple
 import torch
+from common.noisy_layer import NoisyLinear
 
 
 class Model(torch.nn.Module):
@@ -90,10 +91,23 @@ class Model(torch.nn.Module):
 
 
 class DuelingModel(Model):
-    def __init__(self, configuration: List[dict], input_shape: int, output_shape: int):
+    def __init__(self, configuration: List[dict], input_shape: int, output_shape: int, size: int = 0):
         super(DuelingModel, self).__init__(configuration, input_shape)
-        self.value = torch.nn.Linear(in_features=self.output_shape, out_features=1)
-        self.advantage = torch.nn.Linear(in_features=self.output_shape, out_features=output_shape)
+
+        if size == 0:
+            self.value = torch.nn.Linear(in_features=self.output_shape, out_features=1)
+            self.advantage = torch.nn.Linear(in_features=self.output_shape, out_features=output_shape)
+        else:
+            self.value = torch.nn.Sequential(
+                torch.nn.Linear(in_features=self.output_shape, out_features=size),
+                torch.nn.ReLU(),
+                torch.nn.Linear(in_features=size, out_features=1)
+            )
+            self.advantage = torch.nn.Sequential(
+                torch.nn.Linear(in_features=self.output_shape, out_features=size),
+                torch.nn.ReLU(),
+                torch.nn.Linear(in_features=size, out_features=output_shape)
+            )
 
     def forward(self, x):
         features = self.features(x)
@@ -101,6 +115,33 @@ class DuelingModel(Model):
         advantage = self.advantage(features)
         q_values = value + advantage - advantage.mean(dim=1, keepdim=True)
         return q_values
+
+
+class NoisyModel(Model):
+    def __init__(self, configuration: List[dict], input_shape: int, output_shape: int, size: int = 0):
+        super(NoisyModel, self).__init__(configuration, input_shape)
+        self.size = size
+
+        if size == 0:
+            self.output = NoisyLinear(in_features=self.output_shape, out_features=output_shape)
+        else:
+            self.hidden = NoisyLinear(in_features=self.output_shape, out_features=size)
+            self.output = NoisyLinear(in_features=size, out_features=output_shape)
+
+    def forward(self, x):
+        features = self.features(x)
+
+        if self.size > 0:
+            features = torch.nn.functional.relu(self.hidden(features))
+
+        output = self.output(features)
+        return output
+
+    def reset_noise(self):
+        if self.size > 0:
+            self.hidden.reset_noise()
+
+        self.output.reset_noise()
 
 
 class ActorCriticModel(Model):
