@@ -26,7 +26,6 @@ class Snake(AbstractEnvironment):
         self.frames_count = frames_count
         super().__init__()
 
-        self.screen = None
         self.snake = None
         self.food = None
         self.direction = None
@@ -83,7 +82,8 @@ class Snake(AbstractEnvironment):
         return img
 
     def get_title(self) -> str:
-        return f"snake_{self.field_width}x{self.field_height}_frames{self.frames_count}"
+        state_type = f"frames{self.frames_count}" if self.frames_count > 0 else "vectorized"
+        return f"Snake {self.field_width}x{self.field_height} {state_type}"
 
     def __init_snake(self):
         snake = []
@@ -182,10 +182,12 @@ class Snake(AbstractEnvironment):
 
     def get_curr_frame(self):
         state = np.zeros((self.field_height, self.field_width))
-        state[self.food['y'], self.food['x']] = -1
 
         for cell in self.snake:
-            state[cell['y'], cell['x']] = 1
+            state[cell['y'], cell['x']] = 0.5
+
+        state[self.snake[0]['y'], self.snake[0]['x']] = 1
+        state[self.food['y'], self.food['x']] = -1
 
         return state
 
